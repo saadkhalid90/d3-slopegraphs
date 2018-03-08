@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<meta name="robots" content="noindex">
+<html>
+<head>
+  <script src="http://d3js.org/d3.v4.min.js"></script>
+  <meta charset="utf-8">
+  <title>Slope graph</title>
+  <style id="jsbin-css">
+
+  </style>
+</head>
+<body>
+
+<script id="jsbin-javascript">
+  d3.csv('skilledbirth_slope.csv', function(slope_data){
+
+    console.log(slope_data);
+
+    // appending phs1 and phs2 into an array PHS
+    var PHSI = slope_data.map(function(d){ return d.PHSI });
+    var PHSII = slope_data.map(function(d){ return d.PHSII });
+
+    var PHS = PHSI.concat(PHSII);
+    // getting min and max of PHS
+    var min_PHS = d3.min(PHS);
+    var max_PHS = d3.max(PHS);
+
+    // setting the svg
+    var height = 600 * 1.25, width = 500 * 1.25;
+    var margins = {
+      top: 20,
+      bottom: 20,
+      left: 20,
+      right: 20
+    };
+
+    var extra_margins = {
+      left: 50,
+      right: 50
+    }
+
+
+    // setting up the svg
+    svg = d3.select("body")
+            .append("svg")
+            .attr("height", height)
+            .attr("width", width);
+
+    height = height - margins.top - margins.bottom;
+    width = width - margins.left - margins.right;
+
+    // append a chart with margins
+    chart = svg.append("g")
+              .attr("height", height)
+              .attr("width", width)
+              .attr("transform", "translate(" + margins.left + ", " + margins.bottom +")");
+    // defining the scale
+    yScale = d3.scaleLinear()
+                .domain([min_PHS, max_PHS])
+                .range([ height - margins.bottom, margins.top ]);
+
+    var x_line1 = margins.left + extra_margins.left;
+    var x_line2 = chart.attr("width") - extra_margins.right;
+
+
+
+    function border_lines(outer_margin, inner_margin, parent){
+      var x_line1 = outer_margin.left + inner_margin.left;
+      var x_line2 = parent.attr("width") - inner_margin.right;
+
+      parent.append("line")
+            .attr("x1", x_line1)
+            .attr("x2", x_line1)
+            .attr("y1", yScale(min_PHS))
+            .attr("y2", yScale(max_PHS))
+            .style("stroke", "grey")
+            .style("stroke-dasharray", 3)
+            .classed("border_line", true);
+
+      parent.append("line")
+            .attr("x1", x_line2)
+            .attr("x2", x_line2)
+            .attr("y1", yScale(min_PHS))
+            .attr("y2", yScale(max_PHS))
+            .style("stroke", "grey")
+            .style("stroke-dasharray", 3)
+            .classed("border_line", true);
+    }
+
+    border_lines(margins, extra_margins, chart);
+
+    chart.selectAll("cirle")
+          .data(slope_data)
+          .enter()
+          .append("circle")
+          .attr("r", 2)
+          .attr("cx", x_line1)
+          .attr("cy", function(d, i){ return yScale(d.PHSI) })
+          .style("opacity", 0.4);
+
+    chart.selectAll("cirle")
+          .data(slope_data)
+          .enter()
+          .append("circle")
+          .attr("r", 2)
+          .attr("cx", x_line2)
+          .attr("cy", function(d, i){ return yScale(d.PHSII) })
+          .style("opacity", 0.4);
+
+    chart.selectAll(".slope_lines")
+          .data(slope_data)
+          .enter()
+          .append("line")
+          .classed("slope_lines", "true")
+          //.attr("r", 2)
+          .attr("x1", x_line1)
+          .attr("y1", function(d, i){ return yScale(d.PHSI) })
+          .attr("x2", x_line2)
+          .attr("y2", function(d, i){ return yScale(d.PHSII) })
+          .style("stroke", function(d, i){
+              return color_slope_lines(d.PHSII - d.PHSI)
+          })
+          .style("opacity", 0.2);
+
+    var text_padding = 5;
+
+    // text for PHS I
+    chart.selectAll(".PHSI_text")
+          .data(slope_data)
+          .enter()
+          .append("text")
+          .classed("PHSI_text", true)
+          .text(function(d, i){
+            return d.District + ", " + d.PHSI;
+          })
+          .attr("x", x_line1 - text_padding)
+          .attr("y", function(d, i){
+            return yScale(d.PHSI);
+          })
+          .style("font-size", 8)
+          .style("font-family", "sans-serif")
+          .style("opacity", 0.2)
+          .style("text-anchor", "end");
+
+    // text for PHS II
+    chart.selectAll(".PHSII_text")
+          .data(slope_data)
+          .enter()
+          .append("text")
+          .classed("PHSII_text", true)
+          .text(function(d, i){
+            return d.District + ", " + d.PHSII;
+          })
+          .attr("x", x_line2 + text_padding)
+          .attr("y", function(d, i){
+            return yScale(d.PHSII);
+          })
+          .style("font-size", 8)
+          .style("font-family", "sans-serif")
+          .style("opacity", 0.2)
+          .style("text-anchor", "start");
+
+    function color_slope_lines(difference){
+      if (difference >= 10){
+        return "blue";
+      }
+      else if (difference <= - 10){
+        return "red";
+      }
+      else {
+        return "black";
+      }
+    }
+  })
+
+</script>
+</body>
+</html>
